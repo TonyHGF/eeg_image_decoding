@@ -1,0 +1,106 @@
+{
+  "repo": "LidongYang/EEG_Image_decode",
+  "revision": "dbe34bb2407164f70883c661c76664f0d596e522",
+  "files": [
+    {
+      "path": "Preprocessed_data_250Hz/sub-01/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "0489b80781c1a79afa2f952309af30c4a8c1396c5518cdb316b4f3b251a154b9"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-01/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "a6a023c7d8983690aba43f2eaf2e9982739bc0f51981e2e392cb89e014698237"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-02/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "951ba71502ef10c025e33471f22d9c7944780b997d673400e88e4716043f9408"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-02/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "be1becfde2d659d11368f930d1b822c21fc4fb28a19bb95c7f4dc192f5d9b9d0"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-03/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "179a29b277563e9b2d7929fa0076eefde755a9f9ddc3213fd3bb84dd8aeab0fd"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-03/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "25d52e758241e2622ec903fb78280c33b6f7fadd223016baabbc1c85489deb62"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-04/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "cba83bc49213f8783d29e1717e63c0b429967601ea417adf6671dbfd2336c03e"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-04/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "a658b1a82504f6f426a53a4a3ac28601b9988ec109b676d85b211a57a13d3e27"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-05/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "82200125cb50924c66ce05748e4abe351821aa41907e96583d62862614fb9740"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-05/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "b9ac68b2bb0d9469d0d8570874f6be9b7d135c031655409c67510907da6fe7c5"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-06/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "6a44e65e272fc9d5eb0e29f501cd8f20cde07483bb3acb5103dced124b4bfb67"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-06/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "940ca2c6a40b24fd082c5844f146e694e80d3595101679ab7ccb3a9afff24e79"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-07/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "817fba7310acbc80230c85b8c6af8e5be59987394df6124b28f3ae8b4e5f9f54"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-07/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "ba446573a787a98462d4b0ab09923b9b7452a542c19d60cfd97ceffbbc5d71da"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-08/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "ed94eecd82ffdb125a497d79685da08e94b1411d18c339d461fb930f2d160710"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-08/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "1ddd73ef392883004c384cda1fdf7ef7a95e2078fba8e49293bcf381c1c762c2"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-09/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "e1fafda025c7b494f55c1b94d9d90d40bcecaf1960ec1dbecfc922e3583f5ac1"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-09/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "421e23e5006042a3a76cbccf53b0329d06f3b8b677a079ec3ec27693e59cdb8e"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-10/preprocessed_eeg_test.npy",
+      "size": 2016003002,
+      "sha256": "c4babd3bc2fe7066c2cc2707259a41b267e03d13bc6d062272e820b20aa9e8e9"
+    },
+    {
+      "path": "Preprocessed_data_250Hz/sub-10/preprocessed_eeg_training.npy",
+      "size": 8336163007,
+      "sha256": "ab043e48057258bab478bebf8796c36787306a3cd08a0ca5f8f2492ee9f23e76"
+    }
+  ]
+}
