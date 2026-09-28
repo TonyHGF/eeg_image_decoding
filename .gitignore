@@ -1,0 +1,9 @@
+.hpc-runs/
+logs/
+model/
+results/
+Things_EEG2/
+Things-EEG2/
+EEG2image/
+__pycache__/
+*.pyc
