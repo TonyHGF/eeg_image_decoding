@@ -51,6 +51,9 @@ def main():
     parser.add_argument("--endpoint", default="https://huggingface.co")
     parser.add_argument("--workers", type=int, default=2, choices=range(1, 5))
     parser.add_argument("--subject", help="Optional single subject, e.g. sub-01")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--download-only", action="store_true", help="Transfer host: defer hashing to a CPU job")
+    mode.add_argument("--verify-only", action="store_true", help="CPU node: no network access required")
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     assert manifest["revision"] == REVISION and manifest["repo"] == REPO
@@ -67,14 +70,21 @@ def main():
         partial = target.with_suffix(target.suffix + ".part")
         have = target.stat().st_size if target.exists() else partial.stat().st_size if partial.exists() else 0
         remaining += max(0, entry["size"] - have)
-    if shutil.disk_usage(root).free < remaining + 8 * GIB:
+    if not args.verify_only and shutil.disk_usage(root).free < remaining + 8 * GIB:
         raise OSError(f"Need {remaining / GIB:.2f} GiB plus 8 GiB free-space margin")
 
     def download(entry):
         target = root / entry["path"]
         target.parent.mkdir(parents=True, exist_ok=True)
-        if target.exists():
+        if args.verify_only:
             verify(target, entry)
+            return
+        if target.exists():
+            if args.download_only:
+                if target.stat().st_size != entry["size"]:
+                    raise ValueError(f"Existing file has wrong size: {target}")
+            else:
+                verify(target, entry)
             return
         partial = target.with_suffix(target.suffix + ".part")
         url = f"{args.endpoint.rstrip('/')}/datasets/{REPO}/resolve/{REVISION}/{entry['path']}"
@@ -94,14 +104,20 @@ def main():
                             raise RuntimeError(f"curl failed for {entry['path']}: {process.returncode}")
                         time.sleep(5)
                         continue
-            verify(partial, entry)
+            if args.download_only:
+                if partial.stat().st_size != entry["size"]:
+                    raise ValueError(f"Size mismatch: {partial}")
+                print(f"DOWNLOADED {entry['path']}; SHA256 verification pending", flush=True)
+            else:
+                verify(partial, entry)
             partial.rename(target)
             return
 
     print(f"START revision={REVISION} files={len(entries)} remaining_bytes={remaining}", flush=True)
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         list(pool.map(download, entries))
-    print(f"COMPLETE: {len(entries)} files verified; root={root}", flush=True)
+    status = "downloaded; SHA256 verification pending" if args.download_only else "verified"
+    print(f"COMPLETE: {len(entries)} files {status}; root={root}", flush=True)
 
 
 if __name__ == "__main__":

@@ -24,12 +24,19 @@ Expected EEG shapes before repetition averaging:
 - Training: `(16540, 4, 63, 250)`.
 - Test: `(200, 80, 63, 250)`.
 
-Run the preparation command on allocated CPU resources (Bash):
+On the file-transfer host (Bash), download without CPU-heavy hashing:
 
 ```bash
 python scripts/prepare_things_eeg.py \
   --root /public/home/hugf2022/Things_EEG2 \
-  --endpoint https://hf-mirror.com --workers 4
+  --endpoint https://hf-mirror.com --workers 4 --download-only
+```
+
+Then run on allocated CPU resources (no external network required):
+
+```bash
+python scripts/prepare_things_eeg.py \
+  --root /public/home/hugf2022/Things_EEG2 --workers 2 --verify-only
 ```
 
 The default endpoint is the publisher's `https://huggingface.co`; the mirror
@@ -37,7 +44,8 @@ option is for server connectivity. Both are checked against the same pinned
 publisher hashes. Interrupted downloads retain `.part` files and resume.
 The script reserves an 8 GiB free-space margin and executes no downloaded
 pickle while inspecting file headers. It does not alter EEG values or train
-the model. A `COMPLETE` log line means every requested file passed verification.
+the model. Only `COMPLETE: 20 files verified` means all files passed verification;
+`downloaded; SHA256 verification pending` is an intermediate state.
 
 Point `--eeg_data_path` to
 `/public/home/hugf2022/Things_EEG2/Preprocessed_data_250Hz`.
