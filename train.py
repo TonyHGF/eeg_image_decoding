@@ -56,6 +56,7 @@ import datetime
 
 from eeg_encoders import NICE, ATMS, MCRL, HYBRID, Config, ResidualAdd
 from modules import weights_init_tensor, ParameterGroupManager
+from checkpoint_io import load_eeg_checkpoint
 
 gpus = [0]
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
@@ -145,7 +146,7 @@ class IE():
                 ckpt_path = max(candidates, key=os.path.getmtime)
                 print(f"Found pretrain checkpoint for subject {self.nSub}: {ckpt_path}. Attempting to load into eeg_model.")
 
-                loaded = torch.load(ckpt_path, map_location='cpu', weights_only=True)
+                loaded = load_eeg_checkpoint(ckpt_path)
                 state_dict = loaded.get('model_state', loaded) if isinstance(loaded, dict) else loaded
 
                 if isinstance(state_dict, dict):

@@ -12,6 +12,7 @@ import open_clip
 from clip_backends import load_backend
 from eeg_encoders import HYBRID
 from modules import ParameterGroupManager
+from checkpoint_io import load_eeg_checkpoint
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--assets', type=Path, required=True)
@@ -39,8 +40,10 @@ for backend in ['cn', 'openai']:
 ParameterGroupManager._COMPILED = ParameterGroupManager.compile_patterns()
 eeg_model = HYBRID()
 checkpoint = args.assets / 'mae/mae_pretrain_HYBRID_sub01_best.pth'
+args.output.parent.mkdir(parents=True, exist_ok=True)
+args.output.write_text(json.dumps(report, indent=2), encoding='utf-8')
 if checkpoint.exists():
-    loaded = torch.load(checkpoint, map_location='cpu', weights_only=True)
+    loaded = load_eeg_checkpoint(checkpoint)
     state = loaded.get('model_state', loaded)
     filtered = ParameterGroupManager.build_load_dict(eeg_model, state, ParameterGroupManager.parse_groups('ALL'))
     target = eeg_model.state_dict()
