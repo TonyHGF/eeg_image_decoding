@@ -78,3 +78,19 @@ Create a log directory, then submit from a clean frozen checkout using
 Inspect `squeue`, `sacct`, logs and per-subject JSON/CSV outputs. All large
 model assets and experimental outputs live on `/home_data`; verified EEG
 stays under `/public/home/hugf2022/Things_EEG2/Preprocessed_data_250Hz`.
+
+After verifying scheduler success, copy the small metrics and history JSONs
+into condition directories `cn-cached`, `cn-shared`, and `openai-shared`.
+The standard-library-only report generator checks all ten subjects, common
+training controls, paired split/checkpoint identities, and complete metrics:
+
+```powershell
+python scripts/summarize_clip_comparison.py --root /path/to/results --output /path/to/report
+```
+
+It writes Markdown, per-subject CSV, mean/sample-SD CSV, and paired differences
+in percentage points. For an interim report of a completed condition only,
+add `--conditions cn-cached`. A condition with missing subjects is rejected.
+Feature provenance, common caption hashes, and Slurm exit status are checked
+separately in the run record; the report generator does not infer these from
+metric files.
