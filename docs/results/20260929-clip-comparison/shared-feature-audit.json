@@ -1,0 +1,88 @@
+{
+  "captions_sha256": "8484f67d9d953538a153dceb37b89d5105d4f8ac74252c5f1a4bc5cba3f00e35",
+  "image_count": 16740,
+  "backends": {
+    "cn": {
+      "manifest_sha256": "f0f6fb648caf3e4a4baec2a0765aa15c87006e76a1947d2dc8621103e1bb54ff",
+      "files": {
+        "image_train.pt": {
+          "shape": [
+            16540,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.1920928955078125e-07,
+          "sha256": "ad672acf61665c4fc09d9c6a1d9ff38aaaf4ca038e4aa03e2f0b418e90c7af5d"
+        },
+        "text_train.npy": {
+          "shape": [
+            16540,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.1920928955078125e-07,
+          "sha256": "c60bd1c5f5f03f39958eb68f323aaa7cf9ba99b54141662e51a08758eb74236e"
+        },
+        "image_test.pt": {
+          "shape": [
+            200,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.1920928955078125e-07,
+          "sha256": "7e47374788cb8360decee21fca990774a409fc638cc8190983156eb4b3755881"
+        },
+        "text_test.npy": {
+          "shape": [
+            200,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 5.960464477539063e-08,
+          "sha256": "4583465ed3ca3270d36000d213f29147d670e7f4481d86e539aa648d56dc0fc2"
+        }
+      }
+    },
+    "openai": {
+      "manifest_sha256": "9b6d08385db4f1f7dd82c93ac478e958a132185a38f630c5df4d55d8369af052",
+      "files": {
+        "image_train.pt": {
+          "shape": [
+            16540,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.7881393432617188e-07,
+          "sha256": "4d4f2260806f8851bb381cc57e578ad0432b1d41656662604f68709890794956"
+        },
+        "text_train.npy": {
+          "shape": [
+            16540,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.7881393432617188e-07,
+          "sha256": "8866c9a433e252546fb93681dd60273bc64d63ce064f3e3ff0fec6e0bd4f6c3c"
+        },
+        "image_test.pt": {
+          "shape": [
+            200,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.1920928955078125e-07,
+          "sha256": "1ff4ef81a5fac22b95e25727b4c2660a36fe6e3301ef91cf6bc080c34aa968ef"
+        },
+        "text_test.npy": {
+          "shape": [
+            200,
+            1024
+          ],
+          "dtype": "float32",
+          "max_norm_error": 1.1920928955078125e-07,
+          "sha256": "1527ea0447014e74068c74852e5839949e78fc648c1d958aea78211b29f5be97"
+        }
+      }
+    }
+  }
+}
