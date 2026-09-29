@@ -9,6 +9,7 @@ import torch
 from PIL import Image
 import cn_clip.clip as cn_clip
 import open_clip
+from clip_backends import load_backend
 from eeg_encoders import HYBRID
 from modules import ParameterGroupManager
 
@@ -19,13 +20,7 @@ parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
 report = {}
 for backend in ['cn', 'openai']:
-    if backend == 'cn':
-        model, transform = cn_clip.load_from_name('RN50', device='cuda', download_root=str(args.assets / 'weights'))
-        tokenizer = cn_clip.tokenize
-    else:
-        model, _, transform = open_clip.create_model_and_transforms('RN50',
-            pretrained='openai', cache_dir=str(args.assets / 'weights'), device='cuda')
-        tokenizer = open_clip.get_tokenizer('RN50')
+    model, transform, tokenizer = load_backend(backend, args.assets / 'weights')
     model = model.float().eval()
     report[backend] = {}
     for split, indices in [('training', [0, 100, 10000]), ('test', [0, 199])]:

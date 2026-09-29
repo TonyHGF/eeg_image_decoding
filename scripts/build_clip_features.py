@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import random
+from clip_backends import load_backend
 
 
 def images(root):
@@ -77,15 +78,7 @@ def features(args, records):
             raise ValueError('Caption order does not match image manifest')
     captions_hash = hashlib.sha256(args.captions.read_bytes()).hexdigest()
     for backend in args.backends:
-        if backend == 'cn':
-            import cn_clip.clip as clip
-            model, preprocess = clip.load_from_name('RN50', device='cuda', download_root=str(args.weights))
-            tokenize = clip.tokenize
-        else:
-            import open_clip
-            model, _, preprocess = open_clip.create_model_and_transforms(
-                'RN50', pretrained='openai', cache_dir=str(args.weights), device='cuda')
-            tokenize = open_clip.get_tokenizer('RN50')
+        model, preprocess, tokenize = load_backend(backend, args.weights)
         model = model.float().eval()
         target = args.output / backend
         target.mkdir(parents=True, exist_ok=True)
