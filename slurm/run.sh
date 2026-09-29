@@ -6,8 +6,10 @@ shift
 cd "${SLURM_SUBMIT_DIR:?}"
 test "$(git rev-parse HEAD)" = "$expected_commit"
 test -z "$(git status --porcelain --untracked-files=normal)"
+set +u  # Conda's compiler activation hooks read unset toolchain variables.
 source "${CONDA_BASE:-$HOME/anaconda3}/etc/profile.d/conda.sh"
 conda activate eeg-image-decoding-hpc
+set -u
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-4}"
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
