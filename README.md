@@ -54,6 +54,10 @@ place them under `./results/mae_eeg_pretrain/checkpoints/`.
 
 ## Details
 
+The paired CN-CLIP/OpenAI rank-fusion follow-up is documented in
+[docs/rank-fusion.md](docs/rank-fusion.md), including local checks, server commands,
+the frozen C/L grid, and validation-only parameter selection.
+
 ### SubjectLayers
 **Location:** [`eeg_encoders.py`](eeg_encoders.py) (lines 375-393)
 

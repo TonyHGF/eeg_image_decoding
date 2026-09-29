@@ -1,0 +1,14 @@
+{
+  "c_values": ["1", "4/3", "5/3", "2"],
+  "windows": [5, 10],
+  "branches": ["cn_image", "cn_text", "openai_image", "openai_text"],
+  "combinations": {
+    "image_text_equal": [0.5, 0, 0, 0.5],
+    "four_equal": [0.25, 0.25, 0.25, 0.25]
+  },
+  "checkpoint": "lowest_validation_loss",
+  "candidate_count": 200,
+  "seed": 2023,
+  "tie_rule": "vote descending, weighted mean rank ascending, candidate id ascending",
+  "selection": "mean validation paired Top-1, then Top-5, then config order"
+}
