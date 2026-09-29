@@ -18,6 +18,8 @@ parser.add_argument('--img_train_path', type=str, default='./EEG2image/features/
 parser.add_argument('--img_test_path', type=str, default='./EEG2image/features/clip-rn50_features_test.pt')
 parser.add_argument('--text_train_path', type=str, default='./EEG2image/features/Qwen_feature_maps_training_clip_cn.npy')
 parser.add_argument('--text_test_path', type=str, default='./EEG2image/features/Qwen_feature_maps_test_clip_cn.npy')
+parser.add_argument('--subjects', type=int, nargs='+', default=None)
+parser.add_argument('--pretrain_dir', type=str, default=None)
 
 # parameters for pretraining weight transfer strategies
 parser.add_argument('--no_pretrain', default=False, action='store_true',
@@ -44,6 +46,8 @@ import time
 import numpy as np
 import pandas as pd
 import glob
+import json
+import hashlib
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -55,7 +59,8 @@ from modules import weights_init_tensor, ParameterGroupManager
 
 gpus = [0]
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, gpus))
+# Keep Slurm's assigned devices. This script uses one visible GPU.
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", ','.join(map(str, gpus)))
 model_idx = 'test_eeg1'
 
 ParameterGroupManager._COMPILED = ParameterGroupManager.compile_patterns()
@@ -98,7 +103,10 @@ class IE():
         self.early_stopping = args.early_stopping
 
         self.pretrain = False
+        self.loaded_parameter_keys = []
+        self.pretrain_checkpoint = None
 
+        os.makedirs(args.result_path, exist_ok=True)
         self.log_write = open(args.result_path + "log_subject%d.txt" % self.nSub, "w")
         self.Tensor = torch.cuda.FloatTensor
         self.LongTensor = torch.cuda.LongTensor
@@ -127,7 +135,7 @@ class IE():
             # print("Attempting to load pretrained weights...")
             # print("Module name for checkpoint search:", self.module_name)
 
-            ckpt_dir = os.path.join(args.result_path, 'mae_eeg_pretrain', 'checkpoints')
+            ckpt_dir = args.pretrain_dir or os.path.join(args.result_path, 'mae_eeg_pretrain', 'checkpoints')
             pattern = os.path.join(ckpt_dir, f"mae_pretrain_{self.module_name}_sub{self.nSub:02d}_*.pth")
             # pattern = os.path.join(ckpt_dir, f"mae_pretrain_*_mr0.3_embed256_depth2_sub{self.nSub:02d}_*.pth")
             candidates = glob.glob(pattern)
@@ -137,7 +145,7 @@ class IE():
                 ckpt_path = max(candidates, key=os.path.getmtime)
                 print(f"Found pretrain checkpoint for subject {self.nSub}: {ckpt_path}. Attempting to load into eeg_model.")
 
-                loaded = torch.load(ckpt_path, map_location='cpu', weights_only=False)
+                loaded = torch.load(ckpt_path, map_location='cpu', weights_only=True)
                 state_dict = loaded.get('model_state', loaded) if isinstance(loaded, dict) else loaded
 
                 if isinstance(state_dict, dict):
@@ -151,15 +159,18 @@ class IE():
                     
                     try:
                         missing, unexpected = self.eeg_model.load_state_dict(filtered_keys, strict=False)
+                        if not filtered_keys:
+                            raise RuntimeError('Checkpoint loaded zero encoder parameters')
+                        self.loaded_parameter_keys = sorted(filtered_keys)
+                        self.pretrain_checkpoint = ckpt_path
                         print(f"    Loaded: {len(filtered_keys)} parameters")
                         # print(f"    Missing keys: {len(missing)}, Unexpected keys: {len(unexpected)}")
                     except Exception as e:
-                        print(f"   Warning: failed to load encoder parameters: {e}")
+                        raise RuntimeError(f"Failed to load encoder parameters: {e}") from e
                 else:
-                    print("Checkpoint state_dict is not a dict; skipping loading.")
+                    raise ValueError('Checkpoint state_dict is not a dict')
             else:
-                print(f"No MAE checkpoint found for subject {self.nSub} at {ckpt_dir}")
-                print("Training from scratch...")
+                raise FileNotFoundError(f"No MAE checkpoint at {ckpt_dir}; use --no_pretrain explicitly for scratch training")
 
         else:
             print("--no_pretrain flag set. Training from scratch without loading MAE weights.")
@@ -172,9 +183,9 @@ class IE():
 
     def load_precomputed_features(self):
 
-        train_data = torch.load(self.train_feature_file_path)
+        train_data = torch.load(self.train_feature_file_path, map_location='cpu', weights_only=True)
         self.train_img_features = train_data["img_features"]    # shape: (16540, 1024)
-        test_data = torch.load(self.test_feature_file_path)
+        test_data = torch.load(self.test_feature_file_path, map_location='cpu', weights_only=True)
         self.test_img_features = test_data["img_features"]    # shape: (200, 1024)
         
 
@@ -185,11 +196,12 @@ class IE():
         total = 0
         correct = 0
         all_labels = set(range(img_features_all.size(0)))  # All possible classes in batch
+        candidate_rng = random.Random(self.args.seed)
 
         for idx, label in enumerate(labels):
             # Select k-1 random classes excluding the correct class
             possible_classes = list(all_labels - {label.item()})
-            selected_classes = random.sample(possible_classes, k - 1) + [label.item()]
+            selected_classes = candidate_rng.sample(sorted(possible_classes), k - 1) + [label.item()]
 
             selected_img_features = img_features_all[selected_classes]
             similarity = (100.0 * eeg_features[idx] @ selected_img_features.T).softmax(dim=-1)
@@ -291,14 +303,17 @@ class IE():
 
     
     def get_text_data(self):
-        train_txt_feature = np.load("./EEG2image/features/Qwen_feature_maps_training_clip_cn.npy", allow_pickle=True)
-        test_txt_feature = np.load("./EEG2image/features/Qwen_feature_maps_test_clip_cn.npy", allow_pickle=True)
+        train_txt_feature = np.load(self.args.text_train_path, allow_pickle=False)
+        test_txt_feature = np.load(self.args.text_test_path, allow_pickle=False)
         train_txt_feature = np.squeeze(train_txt_feature)
         test_txt_feature = np.squeeze(test_txt_feature)
         return train_txt_feature, test_txt_feature
 
 
     def train(self):
+        run_started = time.time()
+        history = []
+        torch.cuda.reset_peak_memory_stats()
 
         train_eeg, _, test_eeg, test_label = self.get_eeg_data()
         train_img_feature, test_img_feature = self.get_image_data()
@@ -322,6 +337,7 @@ class IE():
 
         # shuffle the training data
         train_shuffle = np.random.permutation(len(train_eeg))
+        split_hash = hashlib.sha256(train_shuffle.tobytes()).hexdigest()
         train_eeg = train_eeg[train_shuffle]
         train_img_feature = train_img_feature[train_shuffle]
         train_txt_feature = train_txt_feature[train_shuffle]
@@ -350,7 +366,10 @@ class IE():
         test_dataset = torch.utils.data.TensorDataset(test_eeg, test_img_feature, test_txt_feature, test_label)
         self.test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=self.batch_size_test, shuffle=False)
 
-        ParameterGroupManager.selective_init(self.eeg_model, self.init_groups)
+        base_model = getattr(self.eeg_model, 'module', self.eeg_model)
+        if self.loaded_parameter_keys and self.init_groups:
+            raise ValueError('Loaded pretrained weights would be reinitialized; use --init_groups T to preserve them')
+        ParameterGroupManager.selective_init(base_model, self.init_groups)
 
         # Optimizers (using AdamW with weight decay)
         self.optimizer_eeg = torch.optim.AdamW(itertools.chain(self.eeg_model.parameters()), lr=self.lr, betas=(self.b1, self.b2), weight_decay=0.01)
@@ -457,6 +476,10 @@ class IE():
                     proj_img_sd_cpu = {k: v.cpu().clone() for k, v in proj_img_sd.items()}
                         
                 print('Epoch:', e, '  Validation Loss: %.4f' % (vloss_val,))
+                history.append(dict(epoch=epoch_num, train_loss=train_loss_avg,
+                                    val_loss=vloss_val, seconds=time.time() - in_epoch))
+                with open(os.path.join(self.args.result_path, f'history_sub{self.nSub:02d}.json'), 'w') as handle:
+                    json.dump(history, handle, indent=2)
 
 
                 # Update top-3 models list
@@ -496,12 +519,13 @@ class IE():
 
         # Load best models for final evaluation
         if top3_models:
-            os.makedirs('./model/', exist_ok=True)
+            model_dir = os.path.join(self.args.result_path, 'model', f'sub-{self.nSub:02d}')
+            os.makedirs(model_dir, exist_ok=True)
             best_eeg_sds = []
             best_proj_img_sds = []
             for idx, (val_loss, epoch_num, eeg_sd, proj_img_sd, _) in enumerate(top3_models):
-                torch.save(eeg_sd, f'./model/{model_idx}_eeg_model_top{idx+1}_epoch{epoch_num}.pth')
-                torch.save(proj_img_sd, f'./model/{model_idx}_proj_img_model_top{idx+1}_epoch{epoch_num}.pth')
+                torch.save(eeg_sd, os.path.join(model_dir, f'eeg_top{idx+1}_epoch{epoch_num}.pth'))
+                torch.save(proj_img_sd, os.path.join(model_dir, f'image_top{idx+1}_epoch{epoch_num}.pth'))
                 best_eeg_sds.append(eeg_sd)
                 best_proj_img_sds.append(proj_img_sd)
         else:
@@ -516,8 +540,8 @@ class IE():
         all_topacc_class = {k: [] for k in range(10)}
 
         for model_idx_ensemble, (best_eeg_sd, best_proj_img_sd) in enumerate(zip(best_eeg_sds, best_proj_img_sds)):
-            self.eeg_model.load_state_dict(best_eeg_sd, strict=False)
-            self.Proj_img.load_state_dict(best_proj_img_sd, strict=False)
+            getattr(self.eeg_model, 'module', self.eeg_model).load_state_dict(best_eeg_sd, strict=True)
+            self.Proj_img.load_state_dict(best_proj_img_sd, strict=True)
             self.eeg_model.eval()
             self.Proj_img.eval()
 
@@ -608,6 +632,20 @@ class IE():
         self.log_write.write('ENSEMBLE AVERAGE - class-way-2-%.6f, class-way-4-%.6f, class-way-10-%.6f, class-way-20-%.6f, class-way-50-%.6f, class-way-100-%.6f\n' %
             (avg_results_class[2], avg_results_class[4], avg_results_class[10], avg_results_class[20], avg_results_class[50], avg_results_class[100]))
         
+        metrics = dict(subject=self.nSub, config=vars(self.args), split_sha256=split_hash,
+                       pretrain_checkpoint=self.pretrain_checkpoint,
+                       loaded_parameter_keys=self.loaded_parameter_keys,
+                       selected_epochs=[m[1] for m in top3_models],
+                       best_val_loss=top3_models[0][0], epochs_completed=len(history),
+                       retrieval_topk={str(k+1): float(v) for k, v in avg_topacc.items()},
+                       text_topk={str(k+1): float(v) for k, v in avg_topacc_class.items()},
+                       retrieval_way={str(k): float(v) for k, v in avg_results.items()},
+                       text_way={str(k): float(v) for k, v in avg_results_class.items()},
+                       seconds=time.time()-run_started,
+                       peak_gpu_memory_bytes=torch.cuda.max_memory_allocated())
+        with open(os.path.join(self.args.result_path, f'metrics_sub{self.nSub:02d}.json'), 'w') as handle:
+            json.dump(metrics, handle, indent=2)
+        self.log_write.close()
         return avg_results, avg_topacc, avg_results_class, avg_topacc_class
         
 
@@ -629,7 +667,11 @@ def main():
     top_k_accs_class = {k: [] for k in range(10)}  # classification top1-top10
     way_k_accs_class = {k: [] for k in [2, 4, 10, 20, 50, 100]}  # classification k-way
    
-    for i in range(num_sub):
+    subjects = args.subjects or list(range(1, num_sub + 1))
+    if any(s < 1 or s > 10 for s in subjects):
+        raise ValueError('Subject IDs must be 1..10')
+    for subject in subjects:
+        i = subject - 1
         cal_num += 1
         starttime = datetime.datetime.now()
         seed_n = args.seed
@@ -686,7 +728,7 @@ def main():
         retrieval_data.append(retrieval_avg_row)
 
         retrieval_array = np.array(retrieval_data)
-        index = [f'subject_{i+1}' for i in range(cal_num)] + ['average']
+        index = [f'subject_{subject}' for subject in subjects] + ['average']
         retrieval_columns = [f'top{k+1}' for k in range(10)] + [f'{k}-way' for k in [2, 4, 10, 20, 50, 100]]
 
         pd_retrieval = pd.DataFrame(data=np.round(retrieval_array, 4), index=index, columns=retrieval_columns)

@@ -1,5 +1,9 @@
 # MindAlign: Bridging EEG, Vision, and Language for Zero-Shot Visual Decoding
 
+Server preparation and the CN-CLIP/OpenAI RN50 comparison commands, controls,
+known upstream limitations, and result locations are documented in
+[docs/clip-comparison.md](docs/clip-comparison.md).
+
 ## Main Folder
 The core implementation lives in [eeg_image_decoding/](eeg_image_decoding/):
 
