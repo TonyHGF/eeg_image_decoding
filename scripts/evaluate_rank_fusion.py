@@ -44,7 +44,7 @@ def evaluate(args):
             for split in ('val', 'test'):
                 ranks, truth = data[f'{split}_ranks'], data[f'{split}_truth']
                 for method, family, c, window, weights in methods:
-                    order, votes = fuse(ranks, weights, c, window)
+                    order, votes = fuse(ranks, weights, c, window, data[f'{split}_candidates'])
                     selected = order[:, 0]
                     all_metrics.append(dict(subject=subject, split=split, method=method, family=family,
                                             c=c, window=window, **metrics(order, truth),

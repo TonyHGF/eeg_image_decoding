@@ -33,6 +33,9 @@ class FusionTests(unittest.TestCase):
         other, _ = fuse(ranks[::-1], [.5, .5], 1, 5)
         np.testing.assert_array_equal(order, other)
         self.assertEqual(order[0, 0], 0)
+        ids = np.array([[9, 3, 1, 8, 7]])
+        by_id, _ = fuse(ranks, [.5, .5], 1, 5, ids)
+        self.assertEqual(by_id[0, 0], 1)
         np.testing.assert_array_equal(rank_scores(np.array([[2., 2., 1.]])), [[1, 2, 3]])
 
     def test_invalid_ranks_rejected(self):

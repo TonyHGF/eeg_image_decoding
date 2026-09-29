@@ -13,7 +13,7 @@ def rank_scores(scores):
     return ranks
 
 
-def fuse(ranks, weights, c, window):
+def fuse(ranks, weights, c, window, candidate_ids=None):
     ranks = np.asarray(ranks)
     weights = np.asarray(weights, dtype=np.float64)
     if ranks.ndim != 3 or ranks.shape[0] != len(weights):
@@ -27,7 +27,9 @@ def fuse(ranks, weights, c, window):
         raise ValueError('Invalid C/window')
     votes = np.sum(weights[:, None, None] * (c + 1) / (c + ranks) * (ranks <= window), axis=0)
     mean_rank = np.sum(weights[:, None, None] * ranks, axis=0)
-    ids = np.broadcast_to(np.arange(ranks.shape[-1]), votes.shape)
+    ids = np.broadcast_to(np.arange(ranks.shape[-1]), votes.shape) if candidate_ids is None else np.asarray(candidate_ids)
+    if ids.shape != votes.shape:
+        raise ValueError('Candidate IDs must match query-by-candidate shape')
     # Round at 12 decimals only to remove floating arithmetic tie noise.
     order = np.lexsort((ids, mean_rank, -np.round(votes, 12)), axis=-1)
     return order, votes
