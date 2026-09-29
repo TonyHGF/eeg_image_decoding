@@ -20,6 +20,12 @@ def csv_write(path, rows):
 def evaluate(args):
     config = json.loads(args.config.read_text(encoding='utf-8'))
     config_hash = hashlib.sha256(args.config.read_bytes()).hexdigest()
+    extraction_path = args.extraction_config or args.config
+    extraction_config = json.loads(extraction_path.read_text(encoding='utf-8'))
+    extraction_hash = hashlib.sha256(extraction_path.read_bytes()).hexdigest()
+    for key in ('branches', 'checkpoint', 'candidate_count', 'seed'):
+        if config[key] != extraction_config[key]:
+            raise ValueError(f'Cannot reuse ranks with changed extraction setting: {key}')
     if (args.output / 'summary.csv').exists():
         raise FileExistsError('Use a fresh report output directory')
     args.output.mkdir(parents=True, exist_ok=True)
@@ -35,7 +41,7 @@ def evaluate(args):
     for subject in args.subjects:
         path = args.ranks / f'sub{subject:02d}.npz'
         audit = json.loads(path.with_suffix('.json').read_text(encoding='utf-8'))
-        if audit['config_sha256'] != config_hash or audit['captions_sha256'] != caption_hash:
+        if audit['config_sha256'] != extraction_hash or audit['captions_sha256'] != caption_hash:
             raise ValueError('Extraction configuration/caption provenance differs')
         if audit['ranks_sha256'] != hashlib.sha256(path.read_bytes()).hexdigest():
             raise ValueError('Rank cache hash mismatch')
@@ -99,6 +105,7 @@ def evaluate(args):
     csv_write(args.output / 'paired_predictions.csv', predictions)
     csv_write(args.output / 'selected_differences.csv', paired)
     result = dict(config=config, config_sha256=config_hash, subjects=args.subjects,
+                  extraction_config=extraction_config, extraction_config_sha256=extraction_hash,
                   validation_selected=selected, global_selected_family=global_choice,
                   extraction_audits=audits)
     (args.output / 'selection.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
@@ -126,5 +133,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('config', 'ranks', 'captions', 'output'):
         parser.add_argument(f'--{name}', type=Path, required=True)
+    parser.add_argument('--extraction-config', type=Path,
+                        help='Original extraction config when reusing caches for new voting settings')
     parser.add_argument('--subjects', type=int, nargs='+', default=list(range(1, 11)))
     evaluate(parser.parse_args())

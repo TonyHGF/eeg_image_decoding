@@ -59,3 +59,7 @@ allocated CPUs or run locally with NumPy after downloading only rank metadata.
 Outputs: all per-subject Top-1..10, group mean/sample-SD tables, validation-selected
 parameters, paired differences against all four single branches, and per-query
 paired predictions. Large EEG data and model weights remain on the server.
+
+## Image-only follow-up
+
+Use `configs/image_rank_fusion.json` and pass `--extraction-config configs/rank_fusion.json` to reuse the original audited ranks. Only the two image branches vote, each with weight 0.5; C/L selection and ties are unchanged. See [results and exact command](results/20260929-image-rank-fusion/README.md).

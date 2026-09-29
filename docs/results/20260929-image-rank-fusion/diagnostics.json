@@ -1,0 +1,8 @@
+{
+  "correct": 1060,
+  "total": 2000,
+  "rescued": 202,
+  "harmed": 149,
+  "paired_rows_verified": 16000,
+  "zero_text_weight_invariance_verified": true
+}
