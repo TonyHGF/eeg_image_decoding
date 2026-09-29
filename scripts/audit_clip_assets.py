@@ -24,7 +24,7 @@ for backend in ['cn', 'openai']:
         tokenizer = cn_clip.tokenize
     else:
         model, _, transform = open_clip.create_model_and_transforms('RN50',
-            pretrained=str(args.assets / 'weights/RN50.pt'), force_quick_gelu=True, device='cuda')
+            pretrained='openai', cache_dir=str(args.assets / 'weights'), device='cuda')
         tokenizer = open_clip.get_tokenizer('RN50')
     model = model.float().eval()
     report[backend] = {}

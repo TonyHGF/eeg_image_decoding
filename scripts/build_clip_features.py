@@ -84,8 +84,7 @@ def features(args, records):
         else:
             import open_clip
             model, _, preprocess = open_clip.create_model_and_transforms(
-                'RN50', pretrained=str(args.weights / 'RN50.pt'),
-                force_quick_gelu=True, device='cuda')
+                'RN50', pretrained='openai', cache_dir=str(args.weights), device='cuda')
             tokenize = open_clip.get_tokenizer('RN50')
         model = model.float().eval()
         target = args.output / backend
