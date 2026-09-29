@@ -1,0 +1,44 @@
+{
+  "extraction_commit": "e8553db984c209a7a1f13e3526f070b28163484d",
+  "evaluation_commit": "8e8552f9dd97499ebafc2908f41bc59bbb565b85",
+  "training_commit": "6702236fe028a1d386fe403b2feacb7e10a08864",
+  "config_sha256": "e1960ca1ae027787337ce4c4460c95b6802550ea5f58af239c93bf2fc4f036a9",
+  "jobs": [
+    {
+      "id": 4154632,
+      "subjects": [
+        1
+      ],
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:00:38"
+    },
+    {
+      "id": 4154633,
+      "subjects": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:01:38"
+    },
+    {
+      "id": 4154634,
+      "subjects": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:02:19"
+    }
+  ],
+  "paired_predictions_sha256": "7008367e52c9a3f2a77b93ca290f408c2429463f2b278d381eb16ec182b79c9c",
+  "paired_predictions_count": 32000
+}
